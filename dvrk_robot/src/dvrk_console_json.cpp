@@ -5,7 +5,7 @@
   Author(s):  Anton Deguet
   Created on: 2015-07-18
 
-  (C) Copyright 2015-2016 Johns Hopkins University (JHU), All Rights Reserved.
+  (C) Copyright 2015-2018 Johns Hopkins University (JHU), All Rights Reserved.
 
 --- begin cisst license - do not edit ---
 
@@ -14,7 +14,6 @@ no warranty.  The complete license can be found in license.txt and
 http://www.cisst.org/cisst/license.txt.
 
 --- end cisst license ---
-
 */
 
 // system
@@ -25,6 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnPath.h>
 #include <cisstCommon/cmnCommandLineOptions.h>
 #include <cisstCommon/cmnGetChar.h>
+#include <cisstCommon/cmnQt.h>
 #include <sawIntuitiveResearchKit/mtsIntuitiveResearchKitConsole.h>
 #include <sawIntuitiveResearchKit/mtsIntuitiveResearchKitConsoleQt.h>
 
@@ -72,6 +72,7 @@ int main(int argc, char ** argv)
     std::string jsonMainConfigFile;
     std::string rosNamespace = "/dvrk";
     double rosPeriod = 10.0 * cmn_ms;
+    double tfPeriod = 20.0 * cmn_ms;
     std::list<std::string> jsonIOConfigFiles;
     std::string versionString = "v1_4_0";
 
@@ -79,13 +80,17 @@ int main(int argc, char ** argv)
                               "json configuration file",
                               cmnCommandLineOptions::REQUIRED_OPTION, &jsonMainConfigFile);
 
+    options.AddOptionOneValue("n", "ros-namespace",
+                              "ROS namespace to prefix all topics, must have start and end \"/\" (default /dvrk/)",
+                              cmnCommandLineOptions::OPTIONAL_OPTION, &rosNamespace);
+
     options.AddOptionOneValue("p", "ros-period",
                               "period in seconds to read all arms/teleop components and publish (default 0.01, 10 ms, 100Hz).  There is no point to have a period higher than the arm component's period",
                               cmnCommandLineOptions::OPTIONAL_OPTION, &rosPeriod);
 
-    options.AddOptionOneValue("n", "ros-namespace",
-                              "ROS namespace to prefix all topics, must have start and end \"/\" (default /dvrk/)",
-                              cmnCommandLineOptions::OPTIONAL_OPTION, &rosNamespace);
+    options.AddOptionOneValue("P", "tf-ros-period",
+                              "period in seconds to read all components and broadcast tf2 (default 0.02, 20 ms, 50Hz).  There is no point to have a period higher than the arm component's period",
+                              cmnCommandLineOptions::OPTIONAL_OPTION, &tfPeriod);
 
     options.AddOptionMultipleValues("i", "ros-io-config",
                                     "json config file to configure ROS bridges to collect low level data (IO)",
@@ -141,19 +146,19 @@ int main(int argc, char ** argv)
         QLocale::setDefault(QLocale::English);
         application = new QApplication(argc, argv);
         application->setWindowIcon(QIcon(":/dVRK.png"));
+        cmnQt::QApplicationExitsOnCtrlC();
         consoleQt = new mtsIntuitiveResearchKitConsoleQt();
         consoleQt->Configure(console);
         consoleQt->Connect();
     }
 
-    // ros wrapper for arms and optionally IOs
-    std::string bridgeName = "sawIntuitiveResearchKit" + rosNamespace + "_" + jsonMainConfigFile;
-    bridgeName = ros::names::clean(bridgeName);
-    std::replace(bridgeName.begin(), bridgeName.end(), '/', '_');
-    std::replace(bridgeName.begin(), bridgeName.end(), '-', '_');
-    std::replace(bridgeName.begin(), bridgeName.end(), '.', '_');
-    mtsROSBridge rosBridge(bridgeName, rosPeriod, true);
-    dvrk::console * consoleROS = new dvrk::console(rosBridge, rosNamespace,
+    // create a console with all dVRK ROS topics
+    // - rosPeriod is used to control publish rate
+    // - tfPeriod is used to control tf broadcast rate
+    //
+    // this also adds a mtsROSBridge that performs the ros::spinOnce
+    // in a separate thread as fast possible
+    dvrk::console * consoleROS = new dvrk::console(rosPeriod, tfPeriod, rosNamespace,
                                                    console, versionEnum);
     // IOs
     const std::list<std::string>::const_iterator end = jsonIOConfigFiles.end();
@@ -164,7 +169,7 @@ int main(int argc, char ** argv)
         fileExists("ROS IO JSON configuration file", *iter);
         consoleROS->Configure(*iter);
     }
-    componentManager->AddComponent(&rosBridge);
+
     consoleROS->Connect();
 
     //-------------- create the components ------------------

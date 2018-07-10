@@ -109,6 +109,53 @@ class example_application:
         gains.ForcePosition.z = self.arm.get_current_position().p[2]
         self.set_gains_pub.publish(gains)
 
+        print rospy.get_caller_id(), ' -> a plane will be created perpendicular to the master gripper'
+        self.wait_for_coag()
+        # set gains in x, z directions for the line
+        gains.PosStiffNeg.x = 0.0;
+        gains.PosStiffPos.x = 0.0;
+        gains.PosDampingNeg.x = 0.0;
+        gains.PosDampingPos.x = 0.0;
+        gains.PosStiffNeg.y = 0.0;
+        gains.PosStiffPos.y = 0.0;
+        gains.PosDampingNeg.y = 0.0;
+        gains.PosDampingPos.y = 0.0;
+        gains.PosStiffNeg.z = -200.0;
+        gains.PosStiffPos.z = -200.0;
+        gains.PosDampingNeg.z = -5.0;
+        gains.PosDampingPos.z = -5.0;
+
+        stiffOri = -0.2;
+        dampOri = -0.01;
+        gains.OriStiffNeg.x = stiffOri;
+        gains.OriStiffPos.x = stiffOri;
+        gains.OriDampingNeg.x = dampOri;
+        gains.OriDampingPos.x = dampOri;
+        gains.OriStiffNeg.y = stiffOri;
+        gains.OriStiffPos.y = stiffOri;
+        gains.OriDampingNeg.y = dampOri;
+        gains.OriDampingPos.y = dampOri;
+        gains.OriStiffNeg.z = 0.0;
+        gains.OriStiffPos.z = 0.0;
+        gains.OriDampingNeg.z = 0.0;
+        gains.OriDampingPos.z = 0.0;
+
+        # always start from current position to avoid jumps
+        gains.ForcePosition.x = self.arm.get_current_position().p[0]
+        gains.ForcePosition.y = self.arm.get_current_position().p[1]
+        gains.ForcePosition.z = self.arm.get_current_position().p[2]
+        orientationQuaternion = self.arm.get_current_position().M.GetQuaternion()
+        gains.ForceOrientation.x = orientationQuaternion[0]
+        gains.ForceOrientation.y = orientationQuaternion[1]
+        gains.ForceOrientation.z = orientationQuaternion[2]
+        gains.ForceOrientation.w = orientationQuaternion[3]
+        gains.TorqueOrientation.x = orientationQuaternion[0]
+        gains.TorqueOrientation.y = orientationQuaternion[1]
+        gains.TorqueOrientation.z = orientationQuaternion[2]
+        gains.TorqueOrientation.w = orientationQuaternion[3]
+        self.set_gains_pub.publish(gains)
+        self.arm.unlock_orientation()
+
         print rospy.get_caller_id(), ' -> keep holding arm, press coag, arm will freeze in position'
         self.wait_for_coag()
         self.arm.move(self.arm.get_desired_position())

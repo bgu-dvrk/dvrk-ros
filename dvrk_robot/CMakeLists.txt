@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2015-2016 Johns Hopkins University (JHU), All Rights Reserved.
+# (C) Copyright 2015-2018 Johns Hopkins University (JHU), All Rights Reserved.
 #
 # --- begin cisst license - do not edit ---
 #
@@ -30,6 +30,7 @@ find_package (catkin REQUIRED
 set (REQUIRED_CISST_LIBRARIES
      cisstCommon
      cisstCommonXML
+     cisstCommonQt
      cisstVector
      cisstVectorQt
      cisstOSAbstraction
@@ -42,7 +43,7 @@ set (REQUIRED_CISST_LIBRARIES
      cisstQt
      )
 
-find_package (cisst 1.0.9 REQUIRED ${REQUIRED_CISST_LIBRARIES})
+find_package (cisst 1.0.10 REQUIRED ${REQUIRED_CISST_LIBRARIES})
 
 if (cisst_FOUND_AS_REQUIRED)
 
@@ -59,9 +60,9 @@ if (cisst_FOUND_AS_REQUIRED)
 
 
   # sawRobotIO1394 has been compiled within cisst, we should find it automatically
-  find_package (sawRobotIO1394          1.5.0 REQUIRED)
-  find_package (sawControllers          1.5.0 REQUIRED)
-  find_package (sawIntuitiveResearchKit 1.5.0 REQUIRED)
+  find_package (sawRobotIO1394          1.6.0 REQUIRED)
+  find_package (sawControllers          1.6.0 REQUIRED)
+  find_package (sawIntuitiveResearchKit 1.6.0 REQUIRED)
 
   include_directories (
     ${dvrk_robot_SOURCE_DIR}/include
@@ -95,6 +96,7 @@ if (cisst_FOUND_AS_REQUIRED)
       ${sawRobotIO1394_LIBRARIES}
       ${sawIntuitiveResearchKit_LIBRARIES}
       ${sawControllers_LIBRARIES}
+      ${catkin_LIBRARIES}
     )
     cisst_target_link_libraries (dvrk_utilities ${REQUIRED_CISST_LIBRARIES})
 
