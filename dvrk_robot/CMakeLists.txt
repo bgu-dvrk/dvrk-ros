@@ -113,3 +113,7 @@ if (cisst_FOUND_AS_REQUIRED)
   endforeach (_executable)
 
 endif (cisst_FOUND_AS_REQUIRED)
+
+add_executable(ati_publisher src/ati_publisher.cpp)
+target_link_libraries(ati_publisher ${catkin_LIBRARIES})
+
