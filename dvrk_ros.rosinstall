@@ -13,7 +13,7 @@
 - git:
     local-name: cisst-saw/sawRobotIO1394
     uri: https://github.com/jhu-saw/sawRobotIO1394
-    version: 2.0.0
+    version: devel
 - git:
     local-name: cisst-saw/sawControllers
     uri: https://github.com/jhu-saw/sawControllers
